@@ -1,10 +1,14 @@
 {
+  "extraResources": [
+    "data/*"
+  ],
   "productName": "angular-electron",
   "directories": {
     "output": "release/"
   },
     "files": [
         "**/*",
+        "!data/**/*",
         "!**/*.ts",
         "!*.code-workspace",
         "!LICENSE.md",

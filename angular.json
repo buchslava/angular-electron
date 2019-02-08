@@ -25,6 +25,7 @@
               "src/favicon.512x512.png"
             ],
             "styles": [
+              "src/bootstrap.scss",
               "src/styles.scss"
             ],
             "scripts": []
