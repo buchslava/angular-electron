@@ -17,7 +17,6 @@ export class HomeComponent implements OnInit {
 
     this.es.fsExtra.readJson(dataPath).then(data => {
       this.addressBook = data;
-      console.log(data);
     }).catch(err => {
       console.log(err);
     });
