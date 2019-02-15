@@ -67,6 +67,7 @@ function createWindow() {
   });
 
   autoUpdater.on('download-progress', (ev) => {
+    console.log(111, ev);
     win.webContents.send('download-progress', ev);
   });
 

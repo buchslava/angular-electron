@@ -8,7 +8,7 @@
     Press OK and wait — the app will restart automatically.
     <button (click)="update()">OK</button>
   </div>
-  <div *ngIf="showProgress">
+  <div>
     <progressbar [max]="max" type="warning" class="progress-striped" [value]="progress"></progressbar>
   </div>
 </div>

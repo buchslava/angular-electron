@@ -43,8 +43,9 @@
   },
   "publish": [
     {
-      "provider": "generic",
-      "url": "http://127.0.0.1:8080/"
+      "provider": "s3",
+      "bucket": "gapminder-offline",
+      "path": "new-version"
     }
   ]
 }
