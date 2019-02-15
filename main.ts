@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as url from 'url';
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, ipcMain as ipc } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as log from 'electron-log';
 
@@ -41,15 +41,42 @@ function createWindow() {
 
   win.webContents.openDevTools();
 
+  win.webContents.once('did-finish-load', () => {
+    autoUpdater.checkForUpdates();
+  });
+
   win.on('closed', () => {
     win = null;
+  });
+
+  ipc.on('start-download', () => {
+    autoUpdater.downloadUpdate();
+  });
+
+  ipc.on('start-update', () => {
+    autoUpdater.quitAndInstall();
+  });
+
+  autoUpdater.on('update-available', (ev) => {
+    win.webContents.send('update-available', ev);
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.log(err);
+    win.webContents.send('update-error', err);
+  });
+
+  autoUpdater.on('download-progress', (ev) => {
+    win.webContents.send('download-progress', ev);
+  });
+
+  autoUpdater.on('update-downloaded', (ev) => {
+    win.webContents.send('update-downloaded', ev);
   });
 }
 
 app.on('ready', () => {
   createWindow();
-  autoUpdater.checkForUpdates();
-  // autoUpdater.checkForUpdatesAndNotify();
 });
 
 app.on('window-all-closed', () => {
@@ -63,26 +90,3 @@ app.on('activate', () => {
     createWindow();
   }
 });
-
-autoUpdater.on('update-available', (ev) => {
-  console.log(222, ev.version);
-  win.webContents.send('update-available', ev);
-  setTimeout(() => {
-    autoUpdater.downloadUpdate();
-  }, 5000);
-})
-autoUpdater.on('error', (err) => {
-  console.log(333, err);
-  win.webContents.send('update-error', err);
-})
-autoUpdater.on('download-progress', (ev) => {
-  console.log(111, ev.percent);
-  win.webContents.send('download-progress', ev);
-})
-
-autoUpdater.on('update-downloaded', (ev) => {
-  // win.webContents.send('update-downloaded', ev);
-  setTimeout(function () {
-    autoUpdater.quitAndInstall();
-  }, 5000);
-})

@@ -1,28 +1,54 @@
-import { Component, OnInit } from '@angular/core';
-import { ipcRenderer } from 'electron';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ElectronService } from '../../providers/electron.service';
 
 @Component({
   selector: 'app-update',
   templateUrl: './update.component.html',
-  styleUrls: ['./update.component.scss']
+  styleUrls: ['./update.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class UpdateComponent implements OnInit {
+  expectedVersion: string;
+  ready = false;
+  showProgress = false;
+  max = 100;
+  progress = 0;
+
   constructor(private es: ElectronService) {
-    ipcRenderer.on('update-available', (event, versionDescriptor) => {
-      console.log(versionDescriptor.version);
-    });
-    ipcRenderer.on('update-error', (event, err) => {
-      console.log(err);
-    });
-    ipcRenderer.on('download-progress', (event, progressDescriptor) => {
-      console.log(progressDescriptor.percent);
-    });
-    ipcRenderer.on('update-downloaded', () => {
-      console.log('ready');
-    });
   }
 
   ngOnInit() {
+    this.es.ipcRenderer.on('update-available', (e, versionDescriptor) => {
+      this.expectedVersion = versionDescriptor.version;
+    });
+    this.es.ipcRenderer.on('update-error', (e, err) => {
+      console.log(err);
+    });
+    this.es.ipcRenderer.on('download-progress', (e, progressDescriptor) => {
+      this.progress = progressDescriptor.percent
+      console.log(this.progress);
+    });
+    this.es.ipcRenderer.on('update-downloaded', () => {
+      this.expectedVersion = null;
+      this.ready = true;
+    });
+  }
+
+  download() {
+    this.es.ipcRenderer.send('start-download');
+  }
+
+  update() {
+    this.es.ipcRenderer.send('start-update');
+    this.expectedVersion = null;
+    this.showProgress = true;
+  }
+
+  cancel() {
+    this.expectedVersion = null;
+  }
+
+  isActive(): boolean {
+    return !!this.expectedVersion || this.showProgress || this.ready;
   }
 }

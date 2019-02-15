@@ -1,2 +1,14 @@
-<div class="container">
+<div *ngIf="isActive()" class="container">
+  <div *ngIf="!!expectedVersion">
+    New version <b>{{expectedVersion}}</b> is available.
+    <button (click)="download()">Update now</button>
+    <button (click)="cancel()">Cancel</button>
+  </div>
+  <div *ngIf="ready">
+    Press OK and wait — the app will restart automatically.
+    <button (click)="update()">OK</button>
+  </div>
+  <div *ngIf="showProgress">
+    <progressbar [max]="max" type="warning" class="progress-striped" [value]="progress"></progressbar>
+  </div>
 </div>
