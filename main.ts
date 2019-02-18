@@ -1,6 +1,7 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import * as url from 'url';
-import { app, BrowserWindow, screen, ipcMain as ipc } from 'electron';
+import { app, BrowserWindow, ipcMain as ipc, remote } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as log from 'electron-log';
 
@@ -12,15 +13,41 @@ autoUpdater.autoInstallOnAppQuit = false;
 const args = process.argv.slice(1);
 const serve = args.some(val => val === '--serve');
 const nonAsarAppPath = app.getAppPath().replace(/app\.asar/, '');
+const userDataPath = (app || remote.app).getPath('userData');
+const settingsPath = path.resolve(userDataPath, 'settings-ae.json');
 
 let win;
+let settings;
+
+function getSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
+  } catch (e) {
+    return {
+      x: 0,
+      y: 0,
+      width: 800,
+      height: 600
+    };
+  }
+}
+
+function writeSettings() {
+  const {x, y, width, height} = win.getBounds();
+  settings.x = x;
+  settings.y = y;
+  settings.width = width;
+  settings.height = height;
+  fs.writeFileSync(settingsPath, JSON.stringify(settings));
+}
 
 function createWindow() {
+  settings = getSettings();
   win = new BrowserWindow({
-    x: 0,
-    y: 0,
-    width: 800, // size.width,
-    height: 600, // size.height
+    x: settings.x,
+    y: settings.y,
+    width: settings.width,
+    height: settings.height,
     title: `Electron app example v.${app.getVersion()}`
   });
 
@@ -39,7 +66,7 @@ function createWindow() {
     }));
   }
 
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   win.webContents.once('did-finish-load', () => {
     autoUpdater.checkForUpdates();
@@ -47,6 +74,10 @@ function createWindow() {
 
   win.on('closed', () => {
     win = null;
+  });
+
+  win.on('close', () => {
+    writeSettings();
   });
 
   ipc.on('start-download', () => {
@@ -62,12 +93,10 @@ function createWindow() {
   });
 
   autoUpdater.on('error', (err) => {
-    console.log(err);
     win.webContents.send('update-error', err);
   });
 
   autoUpdater.on('download-progress', (ev) => {
-    console.log(111, ev);
     win.webContents.send('download-progress', ev);
   });
 

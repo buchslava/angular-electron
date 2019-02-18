@@ -10,9 +10,10 @@ import { ElectronService } from '../../providers/electron.service';
 export class UpdateComponent implements OnInit {
   expectedVersion: string;
   ready = false;
+  updating = false;
   showProgress = false;
   max = 100;
-  progress = 0;
+  progress:number = null;
 
   constructor(private es: ElectronService) {
   }
@@ -25,23 +26,29 @@ export class UpdateComponent implements OnInit {
       console.log(err);
     });
     this.es.ipcRenderer.on('download-progress', (e, progressDescriptor) => {
-      this.progress = progressDescriptor.percent
-      console.log(this.progress);
+      this.progress = progressDescriptor.percent;
+
+      if (this.progress > 0) {
+        this.showProgress = true;
+      } else if (this.progress >= 100) {
+        this.showProgress = false;
+      }
     });
     this.es.ipcRenderer.on('update-downloaded', () => {
       this.expectedVersion = null;
+      this.updating = false;
       this.ready = true;
     });
   }
 
   download() {
     this.es.ipcRenderer.send('start-download');
+    this.updating = true;
+    this.expectedVersion = null;
   }
 
   update() {
     this.es.ipcRenderer.send('start-update');
-    this.expectedVersion = null;
-    this.showProgress = true;
   }
 
   cancel() {
@@ -49,6 +56,6 @@ export class UpdateComponent implements OnInit {
   }
 
   isActive(): boolean {
-    return !!this.expectedVersion || this.showProgress || this.ready;
+    return !!this.expectedVersion || this.updating || this.showProgress || this.ready;
   }
 }
